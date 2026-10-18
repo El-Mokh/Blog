@@ -6,16 +6,13 @@ summary: "First Embedded Project"
 showSummary: true
 ---
 
-I bought a generic IoT camera to see if I could break into it. I hooked up my Raspberry Pi to the camera’s UART interface (TX, RX, and GND) and fired up Minicom, hoping to catch a glimpse of the device’s boot process.
+I bought a generic IoT camera to see if I could break into it. I hooked up my Pi to the camera’s UART interface.
 
-At first, it was all chaos! A wall of scrolling "noise" and garbage text that made the terminal almost unusable but hidden inside that endlessly scrolling text were also the keys to the shutting it. I noticed that the chip kept frantically trying to connect to a hardcoded WiFi network, broadcasting the SSID and also the password in plain text !!
-
-I also grabbed the vital stats:
 * **Chip:** Beken BK7252N
 * **OS:** RT-Thread OS v3.1.0
 * **Kernel Address:** `0x10000`
 
-## The Honeypot & The Fake Shell
+## Fake Shell
 
 To shut up the log spam so I could actually type, I set up a mobile hotspot using the stolen credentials the camera was screaming for(SSID & PASSWORD). Instantly, the camera connected, the noise died down, and I was dropped into a clean shell prompt: `msh />`.
 
@@ -76,61 +73,49 @@ msh />
 msh />
 ```
 
-*Deception*
-
-For a second I thought I won, I found my way into the firmware and it was easy and striaghtforward! BUT the engineers had "lobotomized" the shell; the commands were there, but the underlying code was stubbed out or restricted to reading the wrong hardware buses. So I zwas inside, but there wasn't anything I could really do.
-
+For a second I thought I won, I found my way into the firmware and it was easy and striaghtforward! But no, the commands were just not working.
 ## The Hardware Wall
 
-I briefly considered a hardware brute-force attack using a CH341A programmer to clip onto the flash chip and dump the firmware physically but a deep dive into the **BK7252N datasheet** revealed that this chip is a **SiP (System in Package)**.
-
-The flash memory isn't a separate chip I can clip onto, it’s directly inside the processor silicon itself. The hardware door was welded shut, and the OS shell was a dead end. That left only one path forward: exploiting the bootloader protocol before the OS even loads.
+Thought of dumping the firmware through the flash chip but unfortunately it was a SiP. 
 
 ## The Pivot: Targetting the Bootloader
 
-After a quick Google search, I was introduced to `bk7231tools`, a custom Python utility designed to exploit the serial protocol of Beken chips.
+After a quick Google search, I was introduced to `bk7231tools`, a custom python utility designed to exploit the serial protocol of Beken chips
 
-The theory was simple: The chip listens for a specific "handshake" byte sequence for milliseconds when it first wakes up and If it hears it, it pauses the boot process and enters a raw data transfer mode. If it misses it, it boots the OS and ignores me.
-
-The execution was a test of reflexes. I had to issue the `read_flash` command on the Pi and physically plug in the camera’s power after waiting a bit for the command. I think I was supposed to see a `Waiting for link ...` pro, but that never happen, the tool kept stopping after a few seconds and so I had to wing and hope it works.
+The theory was simple: The chip listens for a specific "handshake" byte sequence for milliseconds when it first wakes up and If it hears it, it pauses the boot process and enters a raw data transfer mode. If it misses it, it boots the OS
 
 ```text
 el-mokh@raspberrypi:~$ bk7231tools read_flash -d /dev/serial0 firmware_2M_backup.bin --length 2097152 --baudrate 115200
 ```
 
-It took multiple attempts. Finally, text started scrolling. I was pulling data at 115200 baud, sucking the memory out byte by byte. Unfortunately, in my excitement and repeated handling of the board, I put too much tension on the wiring.
+It took multiple attempts but text started scrolling. I was pulling data but in my excitement and repeated handling of the board, I put too much tension on the wiring.
 
 ![Ripped Pad Damage](/img/BK7252.png)
 *I ripped the pad during the process, but I secured the dump first.*
 
-I ripped a solder pad right off the PCB BUT I had the prize: a 2MB binary file named `firmware_2M_backup.bin`.
 
-## The Loot
-First I tried running `dissect_dump`, a command offered by the tool, but it gave me bad news. The file i got was corrupted ! And i couldn't retrieve another one because the pad had already been ripped. I ran binwalk on it anyways but it failes. Why ? Because Beken chips don't use `SquashFS`, they use a custom Layout.
-So I performed a digital autopsy using `strings` and `grep`, ignoring the file system structure and hunting for raw text patterns. That’s when I found the smoking gun. The firmware wasn't just sloppy; it was a security nightmare.
-
+## Fw analysis
+Tried running some commands fronm the github tool but it just told me the dump was corrupted. Bad news.And i couldn't retrieve another one because the pad had already been ripped.
+Also I found hardcoded wifi credentials in the firmware. The camera is hardcoded to  look for this specific wifi credentials with a spwcific password.
+So i just kept running regex on the binary hoping to find something interesting.
 Here is what I found inside the dump:
 
-**1. The Hardcoded Backdoor**
-
-I found credentials hardcoded near a function labeled `QC_fileConfigTesting`. The "honeypot" I created earlier wasn't a fluke; it was a factory test mode the developers forgot to disable.
-
+**1. Hardcoded Backdoor**
 ```text
 SSID: NAXCLOW
 PASS: 34974033A
 ```
 
-**2. The Cloud Identity**
+**2. Cloud Identity**
 
-Buried in the binary was the device's unique "Soul": the Cloud Authentication Token and Device ID (Redacted for security).
+the Cloud Authentication Token and Device ID
 ```text
 Device ID: 0800d1099...... [REDACTED]
 Token:     qefc90031649913745bc02df69...... [REDACTED]
 ```
 
-**3. The Spyware Endpoints**
+**3. Cloud API Endpoints**
 
-I mapped out the API endpoints showing exactly how the camera uploads motion alerts and video feeds to a server farm in China.
 ```text
 Endpoint: v720.naxclow.com
 API:/app/api/ApiAlertRecord # And different other ones
