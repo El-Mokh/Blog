@@ -1,11 +1,3 @@
-I am a Computer Science & Engineering student. I enjoy buying IoT devices just to see if I can break and reverse engineer them to get a better grasp of how they work into them . I also enjoy building systems. And finally I like participating in CTFs and I love competition. Outside of university, I am always curious and try to learn more. Most of my time if I'm not at work or university I am doing one of these things :
+I’m a Computer Science student based in the Netherlands and an active member of Maasec. When I’m not in lectures or at work, I’m usually buying cheap IoT hardware just to pop the shell, dump the firmware, and figure out how to break it.
 
-Hardware Hacking
-
-Working on an embedded project
-
-Playing CTFs
-
-Teaching myself something new
-
-I speak English, French, and Arabic , and I’m currently based in the Netherlands. My goal is to become the best in the world in what I do!
+Beyond hardware hacking and embedded systems, I love the competitive grind of CTFs and building things from scratch. I speak English, French, and Arabic, and I’m relentlessly focused on mastering my craft at the highest level.

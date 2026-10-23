@@ -1,7 +1,6 @@
 ---
 title: "Reverse Engineering a Generic IoT Camera"
 date: 2026-01-05
-summary: "First Embedded Project"
 
 showSummary: true
 ---

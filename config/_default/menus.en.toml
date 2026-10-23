@@ -20,6 +20,10 @@
   name = "Hacking & Reverse Engineering"
   pageRef = "posts"
   weight = 5
+[[main]]
+  name = "Embedded Work"
+  pageRef = "Embedded"
+  weight = 5
 
 [[main]]
   name = "CTF Write-Ups"

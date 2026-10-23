@@ -17,7 +17,7 @@ enableStructuredBreadcrumbs = false
 
 replyByEmail = false
 
-# mainSections = ["section1", "section2"]
+mainSections = ["posts", "ctf"]
 # robots = ""
 
 disableImageOptimization = false
@@ -56,7 +56,7 @@ forgejoDefaultServer = "https://v11.next.forgejo.org"
   showRecent = false
   showRecentItems = 5
   showMoreLink = true
-  showMoreLinkDest = "/posts/"
+  showMoreLinkDest = "posts"
   cardView = true
   cardViewScreenWidth = false
   layoutBackgroundBlur = false # only used when layout equals background
