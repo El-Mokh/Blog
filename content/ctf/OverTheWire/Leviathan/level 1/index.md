@@ -2,6 +2,8 @@
 title: "Level 1"
 ---
 
+* Login : ssh leviathan1@leviathan.labs.overthewire.org -p 2223
+
 After connecting to the machine, you'll find and `executable ELF` called `check`. When you execute it, it prompts you for a password. So a pretty educated guess would be that it waiting for a specific `password` to spit out the "flag" or at least move on to the next part of the puzzle.
 
 My plan of aftion was using `gdb` and `disassemble` the main function.
